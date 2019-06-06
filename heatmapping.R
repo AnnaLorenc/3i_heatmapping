@@ -3,7 +3,7 @@ require(dplyr)
 
 #change this line to your location of 'functions_heatmapping.R'
 
-source("~/Documents/projects/3i/3i_paper_draft/NI_2018/after_reviewers/scripts_for_webpage/heatmapping_suite.R")
+source("./heatmapping_suite.R")
 
 #Bone marrow
 file_manual <- "data/3i_bulkDown_manualBM_190604.csv"

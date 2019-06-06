@@ -1,7 +1,7 @@
 require(data.table)
 require(dplyr)
 
-source("~/Documents/projects/3i/3i_paper_draft/NI_2018/after_reviewers/scripts_for_webpage/functions_heatmapping.R")
+source("./functions_heatmapping.R")
 
 heatmap_tissue <-function(file_manual, file_automated){
   require(data.table)
