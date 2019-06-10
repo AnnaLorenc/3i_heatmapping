@@ -176,18 +176,13 @@ heatmap_blood <- function(blood_file) {
   
   colns <- colnames(flow16w_data_dt)
   data_colns <- (1:length(colns))%in%grep("proc|perc|number", colns,ignore.case = TRUE)
+  flow16w_data_dt[,Assay_Date:=as.Date(Assay_Date)]
   WT_flow16w_dt <-take_only_WTs(flow16w_data_dt )
-  WT_flow16w_dt[,Assay_Date:=as.Date(Assay_Date)]
+  
   
   print("Preparing RR...")
-  RR_flow16w_70_ba <-
-    prepare_RR_byindnNum(
-      flow16w_data_dt,
-      WT_flow16w_dt,
-      minInd = 70,
-      colns = colns[data_colns],
-      hard_split_date = min(flow16w_data_dt$Assay_Date)
-    )
+  
+  RR_flow16w_70_ba <-prepare_RR_simple_dt(all_data_dt = flow16w_data_dt, cols_for_RR  = colns[data_colns], split_by_sex = TRUE)
   
   print("Heatmapping both sexes together...")
   hit_calling_flow16w <-
@@ -256,3 +251,46 @@ heatmap_blood <- function(blood_file) {
               female=hit_calling_flow16w_female,
               male=hit_calling_flow16w_male))
 }
+
+heatmap_dss <- function(dss_file) {
+  print("Reading in the file...")
+  dss_AUCt_histo <-
+    read.csv(dss_file, header = TRUE, as.is = TRUE) %>%
+    data.table()
+  
+  
+  print("Heatmapping weight loss...")
+  
+  pars_for_testing_weight <- c("weigth_min",
+                               "w_d7",
+                               "auc_d7")
+  res_weight <-
+    match_and_call (
+      pars_for_testing = pars_for_testing_weight,
+      parameter_to_match = "Age_In_Weeks",
+      dss_data = dss_AUCt_histo[period == "C"],
+      min_number_of_animals = 3,
+      lower_cutoff = 0.025,
+      upper_cutoff = 0.975,
+      byGend = TRUE
+    )
+  
+  
+  pars_for_testing_histo <- c("Average_Histo_Score")
+  print("Heatmapping histology...")
+  res_histo <-
+    match_and_call (
+      pars_for_testing = pars_for_testing_histo,
+      parameter_to_match = "start_weight",
+      dss_data = dss_AUCt_histo[period == "C"],
+      min_number_of_animals = 3,
+      lower_cutoff = 0.025,
+      upper_cutoff = 0.975,
+      byGend = TRUE
+    )
+  
+  return(list(res_histo = res_histo, res_weight = res_weight))
+  
+  
+}
+ 

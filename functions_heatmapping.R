@@ -324,119 +324,91 @@ prepare_RR_simple_dt <- function(all_data_dt,
 
 
 compute_RR_befaft <- function(WT_data,
-                              days_without_WT = NULL,
-                              split_by_sex = TRUE,
+                              days_without_WT=NULL,
+                              split_by_sex=TRUE,
                               minInd,
                               par,
-                              percentile = 0.025,
-                              start = NULL,
-                              end = NULL) 
+                              percentile=0.025,
+                              start=NULL,
+                              end=NULL)
   #Compute time-window RR for the parameter par
   {
-  WT_dt <-
-    data.table(WT_data)[, c("Assay_Date", "Sex", par), with = F][order(Assay_Date)][!is.na((par))]
+  WT_dt <- data.table(WT_data)[,c("Assay_Date", "Sex", par), with=F][order(Assay_Date)][!is.na((par))]
   
-  if (!is.null(start)) {
-    WT_dt <- WT_dt[Assay_Date >= start]
+  if(!is.null(start)){
+    WT_dt <- WT_dt[Assay_Date >=start] 
   }
   
-  if (!is.null(end)) {
-    WT_dt <- WT_dt[Assay_Date <= end]
-  }
-  #add checks: if Assay_Date is class Date, Sex has aproprpaite name
+  if(!is.null(end)){
+    WT_dt <- WT_dt[Assay_Date <= end] 
+  } 
+  #add checks: if Assay_Date is class Date, Sex has aproprpaite name 
   
-  if (split_by_sex) {
-    WT_male <- WT_dt[Sex == "Male", ]
-    WT_female <- WT_dt[Sex == "Female", ]
+  if(split_by_sex){
+    WT_male <- WT_dt[Sex=="Male",]
+    WT_female <- WT_dt[Sex=="Female",]
     #identify dats missing one sex
     #days with female dates only
-    miss_males <-
-      setdiff(WT_female$Assay_Date, WT_male$Assay_Date)
-    if (length(miss_males) > 0) {
-      class(miss_males) <- "Date"
-      days_without_WT <- c(days_without_WT, miss_males)
+    miss_males <- setdiff(WT_female$Assay_Date , WT_male$Assay_Date )
+    if(length(miss_males)>0){
+      class(miss_males) <-"Date"
+      days_without_WT <- c(days_without_WT, miss_males )
     }
-    miss_females <-
-      setdiff(WT_male$Assay_Date, WT_female$Assay_Date)
-    if (length(miss_females) > 0) {
-      class(miss_females) <- "Date"
+    miss_females <- setdiff(WT_male$Assay_Date , WT_female$Assay_Date )
+    if(length(miss_females)>0){
+      class(miss_females) <-"Date"
       #days with male dates only
-      days_without_WT <- c(days_without_WT, miss_females)
+      days_without_WT <- c(days_without_WT,miss_females)
     }
     
-    RR_male  <- compute_RR_befaft(
-      WT_male,
-      minInd = minInd,
-      start = start,
-      end = end,
-      perc = percentile,
-      par = par,
-      split_by_sex = FALSE,
-      days_without_WT = days_without_WT
-    )
-    if (!is.null(RR_male)) {
-      RR_male <- data.frame(RR_male, Sex = "Male")
-    }
+    RR_male  <- compute_RR_befaft(WT_male,
+                                  minInd=minInd,
+                                  start=start,
+                                  end=end,
+                                  perc=percentile,
+                                  par=par,
+                                  split_by_sex=FALSE,
+                                  days_without_WT=days_without_WT)
+    if(!is.null(RR_male)){RR_male <- data.frame( RR_male, Sex="Male")}
     #  print(WT_female[,get(par)])
     
-    RR_female <- compute_RR_befaft(
-      WT_female,
-      minInd = minInd,
-      start = start,
-      end = end,
-      perc = percentile,
-      par = par,
-      split_by_sex = FALSE,
-      days_without_WT = days_without_WT
-    )
-    if (!is.null(RR_female)) {
-      RR_female <- data.frame(RR_female, Sex = "Female")
-    }
+    RR_female <- compute_RR_befaft(WT_female,
+                                   minInd=minInd,
+                                   start=start,
+                                   end=end,
+                                   perc=percentile,
+                                   par=par,
+                                   split_by_sex=FALSE,
+                                   days_without_WT=days_without_WT)
+    if(!is.null(RR_female)){RR_female<-data.frame(RR_female, Sex="Female")}
     # print(RR_female)
     # print(RR_male)
-    if (!(is.null(RR_female) | is.null(RR_male))) {
-      RRres <- rbind(RR_male, RR_female)
-      RRres <- RRres[order(RRres$Assay_Date), ]
-    } else{
+    if(!(is.null(RR_female)|is.null(RR_male))){
+      RRres <-rbind(RR_male, RR_female)
+      RRres <-RRres[order(RRres$Assay_Date),]
+    }else{
       RRres <- NA
-    }
+    }  
     return(RRres)
   }
   
-  WT_dt_sum <- WT_dt[, .(avail_WTs=sum(!is.na(get(par)))), by = Assay_Date]
+  WT_dt_sum <- WT_dt[,.(avail_WTs=sum(!is.na(get(par)))), by=Assay_Date]
   # print(WT_dt_sum)
-  if (!is.null(days_without_WT)) {
-    print("adding days")
-    days_without_WT <-
-      setdiff(days_without_WT, WT_dt_sum$Assay_Date)
-    class(days_without_WT) <- "Date"
- #   print(head(WT_dt_sum))
-#    print(head(data.table(Assay_Date = as.Date(days_without_WT), avail_WTs = 0)))
-    WT_dt_sum[,Assay_Date:=as.Date(Assay_Date)]
-    WT_dt_sum <-
-      rbind(WT_dt_sum, data.table(Assay_Date = as.Date(days_without_WT), avail_WTs = 0))[order(Assay_Date)]
+  if(!is.null(days_without_WT)){print("adding days")
+    days_without_WT <- setdiff(days_without_WT, WT_dt_sum$Assay_Date)
+    class(days_without_WT) <-"Date"
+    WT_dt_sum <- rbind(WT_dt_sum, data.table(Assay_Date=days_without_WT, avail_WTs=0) )[order(Assay_Date)]
   }
- # print(WT_dt_sum)
-  days_for_RR <- find_RR_days(WT_dt_sum, minInd = minInd)
+  #print(WT_dt_sum)
+  days_for_RR <- find_RR_days(WT_dt_sum, minInd=minInd)
   #  print(days_for_RR )
-  #
+  #  
   #change into dates again
-  if (!is.null(days_for_RR)) {
-    days_for_RR <-
-      data.table(data.frame(sapply(data.frame(days_for_RR), function(x)
-        as.Date(x, format = "%Y-%m-%d"), simplify = F)))
+  if(!is.null(days_for_RR )){
+    days_for_RR <- data.table(data.frame(sapply(data.frame(days_for_RR),function(x) as.Date(x, format="%Y-%m-%d" ), simplify=F)))
     #  print(days_for_RR )
-    RR <-
-      compute_RR_from_date(
-        WT_data = WT_data,
-        days_for_RR = days_for_RR,
-        percentile = percentile,
-        par = par,
-        minInd = minInd
-      )
-  } else{
-    RR = NULL
-  }
+    RR <- compute_RR_from_date(WT_data=WT_data, days_for_RR=days_for_RR, percentile=percentile, par=par, minInd=minInd )
+  }else{RR=NULL}
   
   return(RR)
 }
@@ -448,7 +420,8 @@ prepare_RR <- function(cols_for_RR,
                        all_data_dt,
                        minInd = 70) 
   #Prepare time-window RR for every day, sex if needed, and parameter (wrapper for compute_RR_befaft)
-  {if (is.null(WT_dt)) {
+  {
+  if (is.null(WT_dt)) {
     WT_dt <- take_only_WTs(all_data_dt)
   }
   RR_full <- lapply(cols_for_RR, function(par) {
@@ -885,6 +858,7 @@ find_perc_value <-function(value, db_of_parameter){
   return(Fn(value))
 }
 
+
 prepare_RR_byindnNum <-
   function(spleen_data_dt,
            WT_spleen_dt,
@@ -996,7 +970,11 @@ prepare_RR_byindnNum <-
     return(RR_spleen_81_ba_dt_all_dt)
   }
 
-detect_hits_byparam_cp_1 <- function(param, male_genotype, data_to_extract_without_WT, RR, sex_column_RR="Sex", cutoff_in=5){
+
+
+
+detect_hits_byparam_cp_1 <- function(param, male_genotype, data_to_extract_without_WT, RR, sex_column_RR="Sex", cutoff_in=5)
+  {
   male_genotype <-as.character(male_genotype)
   if(grepl("(.*)\\/Y",male_genotype)){
     female_genotype <- sub("(.*)\\/Y$","\\1\\/\\1",male_genotype)
@@ -1034,4 +1012,73 @@ detect_hits_byparam_cp_1 <- function(param, male_genotype, data_to_extract_witho
 }
 
 
+#try the same but by matching with KOs fromother than this param background
+match_by_factor_closest_n_eliminate_subset=
+  #does the same as match_by_factor_closest_n, but excludes from matching a subset of individuals, sharing with the tested one a characteristi - for example, day of test, genotype etc.
+  function(data_WT, data_one_ind_KO, parameter_to_match, closest_n=70, byGend=F, param_for_exclusion=NULL){
+    #If tolerance_in_perc, it will take fraction tolerance_in_perc of the val_of_param_to_match
+    val_of_param_to_match <- unlist(data_one_ind_KO[,parameter_to_match, with=F])
+    
+    #print(val_of_param_to_match)
+    if(byGend){
+      #   print(data_WT[Sex==unlist(data_one_ind_KO[,Sex])])
+      return(match_by_factor_closest_n_eliminate_subset(data_WT[Sex==unlist(data_one_ind_KO[,Sex])],data_one_ind_KO,  parameter_to_match, closest_n=70, byGend=F,param_for_exclusion=param_for_exclusion)[1:closest_n]) 
+    }else{
+      if(!is.null(param_for_exclusion)){
+        value_of_param_for_exclusion <- unlist(data_one_ind_KO[,param_for_exclusion, with=F])
+        #   print(value_of_param_for_exclusion)
+        data_for_match <- data_WT[get(param_for_exclusion)!=value_of_param_for_exclusion]
+      }else{
+        data_for_match <- data_WT
+      }
+      return(data_for_match[order(abs(get(parameter_to_match)-val_of_param_to_match))][1:closest_n])}
+  }
+
+
+match_and_call <-function(pars_for_testing,
+                          parameter_to_match,
+                          dss_data=dss_AUCt_histo[period=="C"],
+                          min_number_of_animals = 3,
+                          lower_cutoff = 0.025,
+                          upper_cutoff = 0.975,
+                          byGend=TRUE)
+{
+  print(paste0("Finding controls matching by sex and ",parameter_to_match,"..."))
+  matched_WT <- lapply(1:nrow(dss_data[Genotype!="WT"]), function (a){
+    list(tested=dss_data[Genotype!="WT"][a],
+         wt=match_by_factor_closest_n_eliminate_subset(dss_data[Genotype=="WT"][Colony_Prefix=="CBSC"],
+                                                       dss_data[Genotype!="WT"][a],closest_n =70, parameter_to_match = parameter_to_match, byGend = byGend))
+  })
+  
+  
+  print("Establishing location within matched WT for each KO animal...") 
+  tests_sets <-
+    lapply(pars_for_testing , function(parameter){ 
+      print(parameter)
+      sapply(1:nrow(dss_data[Genotype!="WT"]), function(x){
+        locate_percentile <- ecdf(unlist(matched_WT[[x]]$wt[,parameter, with=F]))
+        locate_percentile(matched_WT[[x]]$tested[, parameter, with=F])
+      })
+    })
+  
+  names(tests_sets ) <-pars_for_testing
+  
+  print("Heatmapping weight loss...")
+  
+  results_matched <- lapply(names(tests_sets), function(x){
+    a=dss_data[Genotype!="WT"]
+    a[,sigU:=tests_sets[[x]]>= upper_cutoff]
+    a[,sigL:=tests_sets[[x]]<=lower_cutoff]
+    a[,.(par_mean=round(mean(get(x), na.rm=T),2),
+         age=round(mean(Age_In_Weeks, na.rm=T),1),
+         .N,
+         samples_above_cutoff=sum(sigU, na.rm=T),
+         samples_below_cutoff=sum(sigL, na.rm=T), par=x),
+      by=.(Colony_Prefix,Gene_Name,Genotype)][N>=min_number_of_animals]
+    
+  })%>%
+    bind_rows()
+  return(results_matched )
+  
+}
 
