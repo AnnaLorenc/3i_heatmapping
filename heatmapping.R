@@ -1,11 +1,11 @@
 require(data.table)
 require(dplyr)
 
-#change this line to your location of 'functions_heatmapping.R'
 
 source("./heatmapping_suite.R")
 
 #Bone marrow
+# Returns per-strain results ($heatmapped_data) as well as candidate hits ($hit_list_data).
 # Final calls were made with carefull inspection of experiments which
 #contained candidate genotypes by an experienced reseacher.
 
@@ -14,8 +14,8 @@ file_automated <- "data/3i_bulkDown_autoBM_190604.csv"
 BM_results <- heatmap_tissue(file_manual, file_automated)  
 
 
-
 #Spleen
+# Returns per-strain results ($heatmapped_data) as well as candidate hits ($hit_list_data).
 # Final calls were made with carefull inspection of experiments which
 #contained candidate genotypes by an experienced reseacher.
 file_manual <- "data/3i_bulkDown_manualspleen_190604.csv"
@@ -25,6 +25,7 @@ spleen_results <- heatmap_tissue(file_manual, file_automated)
 
 
 #Mesenteric Lymph Node
+# Returns per-strain results ($heatmapped_data) as well as candidate hits ($hit_list_data).
 # Final calls were made with carefull inspection of experiments which
 #contained candidate genotypes by an experienced reseacher.
 
@@ -33,20 +34,20 @@ file_automated <- "data/3i_bulkDown_autoMLN_190604.csv"
 MLN_results <- heatmap_tissue(file_manual, file_automated)  
 
 
-
-
 #Ear epidermis
 # Final calls were made with carefull inspection of experiments which
 #contained candidate genotypes by an experienced reseacher.
+#In the output all_above, all_below,  N: number of samples above the RR, below the RR and tested
+#   above_susp below_susp N_susp : number of samples above the RR on outlier days, below the RR on outlier days and tested for being  on outlier days
 ear_file <- "data/3i_bulkDown_earEpidermis_190604.csv"
 ear_results <- heatmap_ear(ear_file)
 
 
 #Blood 
-#genotypes leading to any of (male-specific, female-specific, both sexes specific) calls were considered as candidates.
+#Returns per-strain results for both sexes together, males-only and females-only testing
+#Genotypes leading to any of (male-specific, female-specific, both sexes specific) calls were considered as candidates.
 # Final calls were made with carefull inspection of experiments which
 #contained candidate genotypes by an experienced reseacher.
-
 blood_file <- "data/3i_bulkDown_blood_190604.csv"
 blood_results <- heatmap_blood(blood_file)
 
@@ -62,7 +63,7 @@ blood_results <- heatmap_blood(blood_file)
 #from starting weight, as a  fraction of  starting weight (w_d7). Minimum of
 #such transformed weights across alll measurements of a given mouse (weigth_min)
 #Area under the curve for transformed weight versus experimental days, till day
-#7 (w_d7).
+#7 (auc_d7).
 #
 #Result contains histology part and weight loss part. Final calls were made
 #based on those & premature death, with carefull inspection of experiments which

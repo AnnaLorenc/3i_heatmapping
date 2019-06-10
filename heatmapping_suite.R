@@ -26,14 +26,14 @@ heatmap_tissue <-function(file_manual, file_automated){
   
   ########  Prepare Reference Ranges ######## 
   
-  colnames_for_RR_data <- intersect(grep("%",colnames(data_automated), val=T), grep("%",colnames(data_manual), val=T))
+  cols_for_RR_data <- intersect(grep("%",colnames(data_automated), val=T), grep("%",colnames(data_manual), val=T))
   
   ##for automated gating (time-window RR)
   
   print("Preparing automated gating RR...")
   
   RR_data_auto <- prepare_RR(all_data_dt = data_automated, 
-                           cols_for_RR  = colnames_for_RR_data,
+                           cols_for_RR  = cols_for_RR_data,
                            minInd = 70)
   
   
@@ -41,33 +41,33 @@ heatmap_tissue <-function(file_manual, file_automated){
   print("Preparing manual post-split RR...")
   
   RR_data_post_manual <- prepare_RR(all_data_dt = manual_data_postsplit,
-                                  cols_for_RR =  colnames_for_RR_data,
+                                  cols_for_RR =  cols_for_RR_data,
                                   minInd = 70)
   
   print("Preparing manual pre-split RR...")
   
   ##for manual gating pre-panel change (all-samples RR)
   RR_data_pre_manual <- prepare_RR_simple_dt(all_data_dt = manual_data_presplit,
-                                           cols_for_RR=colnames_for_RR_data  ) 
+                                           cols_for_RR=cols_for_RR_data  ) 
   
   ########  Check each mice whether it sits within its reference range ######## 
   print("Checking whether mice are in RR range...")
   
   outside_data_auto <- check_if_mouse_outside_dt (all_data_dt = data_automated ,
-                                                RR_data_auto, pars=colnames_for_RR_data  )
+                                                RR_data_auto, pars=cols_for_RR_data  )
   
   outside_data_post_manual <- check_if_mouse_outside_dt(all_data_dt = manual_data_postsplit ,
                                                       RR_data_post_manual,
-                                                      pars=colnames_for_RR_data  ) 
+                                                      pars=cols_for_RR_data  ) 
   outside_data_pre_manual <- check_if_mouse_outside_dt(all_data_dt = manual_data_presplit ,
                                                      RR_data_pre_manual,
-                                                     pars=colnames_for_RR_data  ) 
+                                                     pars=cols_for_RR_data  ) 
   
   BM_outside <- combine_outside(manual_fract = data_manual, 
                                 outside_auto = outside_data_auto,
                                 outside_post_manual = outside_data_post_manual,
                                 outside_pre_manual = outside_data_pre_manual,
-                                colnames_for_RR =colnames_for_RR_data,
+                                cols_for_RR =cols_for_RR_data,
                                 isMatrix = TRUE)
   
   ########  Reformat and identify hits ######## 
@@ -75,7 +75,7 @@ heatmap_tissue <-function(file_manual, file_automated){
   
   
   add_zygosity(BM_outside$res, new_format = TRUE)
-  melted_data <- melt(BM_outside$res[zygosity%in%c("Het","Hom")][Genotype!="WT"][,c("Mouse","Colony_Prefix","Genotype","zygosity", "Gene_Name","Sex",colnames_for_RR_data), with=F],
+  melted_data <- melt(BM_outside$res[zygosity%in%c("Het","Hom")][Genotype!="WT"][,c("Mouse","Colony_Prefix","Genotype","zygosity", "Gene_Name","Sex",cols_for_RR_data), with=F],
                     id.vars = c("Mouse","Genotype","zygosity", "Gene_Name","Sex","Colony_Prefix"))
   heatmapped_data  <- melted_data[zygosity%in%c("Het","Hom")][,tableh(value) ,by=.(Gene_Name, zygosity, Colony_Prefix, variable) ]
   
@@ -108,7 +108,7 @@ heatmap_ear <- function(ear_file) {
   }) %>% bind_rows()
   
   ear_perc_raw <- find_perc_simple_dt(
-    WT_dt = take_only_WTs(ear_data),
+    WT_data = take_only_WTs(ear_data),
     dt = ear_data,
     params =  cols_to_analyse_ear,
     outliers_dt = ear_outliers_raw
@@ -168,6 +168,9 @@ heatmap_ear <- function(ear_file) {
   return(ear_heatmapping_raw)
 }
 
+
+
+
 heatmap_blood <- function(blood_file) {
   print("Reading in the file...")
   flow16w_data_dt <-
@@ -188,7 +191,7 @@ heatmap_blood <- function(blood_file) {
   hit_calling_flow16w <-
     lapply(unique(RR_flow16w_70_ba$par), function(par) {
       print(par)
-      x = do.call("rbind", lapply(unique(flow16w_data_dt[(Genotype != "+/+" &
+      x = lapply(unique(flow16w_data_dt[(Genotype != "+/+" &
                                                             Genotype != "+/Y" &
                                                             Genotype != "WT" & Sex == "Male"), Genotype]), function(x) {
                                                               detect_hits_byparam_cp_1(
@@ -199,7 +202,9 @@ heatmap_blood <- function(blood_file) {
                                                                 sex_column_RR = "Sex",
                                                                 cutoff_in = 4
                                                               )
-                                                            }))
+                                                            })%>%
+        bind_rows()
+                  
       return(x)
     }) %>%
     bind_rows() %>%
@@ -252,6 +257,7 @@ heatmap_blood <- function(blood_file) {
               male=hit_calling_flow16w_male))
 }
 
+
 heatmap_dss <- function(dss_file) {
   print("Reading in the file...")
   dss_AUCt_histo <-
@@ -266,7 +272,7 @@ heatmap_dss <- function(dss_file) {
                                "auc_d7")
   res_weight <-
     match_and_call (
-      pars_for_testing = pars_for_testing_weight,
+      cols_for_RR = pars_for_testing_weight,
       parameter_to_match = "Age_In_Weeks",
       dss_data = dss_AUCt_histo[period == "C"],
       min_number_of_animals = 3,
@@ -280,7 +286,7 @@ heatmap_dss <- function(dss_file) {
   print("Heatmapping histology...")
   res_histo <-
     match_and_call (
-      pars_for_testing = pars_for_testing_histo,
+      cols_for_RR = pars_for_testing_histo,
       parameter_to_match = "start_weight",
       dss_data = dss_AUCt_histo[period == "C"],
       min_number_of_animals = 3,
