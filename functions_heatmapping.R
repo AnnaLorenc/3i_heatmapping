@@ -410,10 +410,8 @@ compute_RR_befaft <- function(WT_data,
       rbind(WT_dt_sum,
             data.table(Assay_Date = days_without_WT, avail_WTs = 0))[order(Assay_Date)]
   }
-  #print(WT_dt_sum)
+
   days_for_RR <- find_RR_days(WT_dt_sum, minInd = minInd)
-  #  print(days_for_RR )
-  #
   #change into dates again
   if (!is.null(days_for_RR)) {
     days_for_RR <-
